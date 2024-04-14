@@ -1,0 +1,38 @@
+- Uvod do problematiky (vstupy, vystupy, obrazok mozno) - 2 slidy
+- Jadro clanku - iba hlavna myslienka
+	- grouped convolution - kazda groupa sa trenuje na svoju feature aj pre attention aj global a nasledne sa spoja extrahovane informacie dokopy do vysledneho embeddingu
+LBS 	- Loss branch split
+	- rozdeli proces do viacerych vetvi (classification, metric branch)
+Global 	- ResNet50
+	- extract global embeddings
+Attention 	- BoTNet transformer structure
+		- extract global attention embeddings
+
+Co povieme:
+Slide metoda v clanku obrazok vstupy vystupy
+	- Vstupom je query (zoznam obrazkov hladanych aut) a galeria zaznamov zo vsetkych kamier s ktorymi chceme porovnavat
+	- Vystupom je pre kazde auto z query, top 7 zhodnych obrazkov, nasledne sa urci v ktorych pripadoch model spravne vyhodnotil zhodu, teda jedna sa o validaciu v tomto pripade
+
+Slide metoda architektura modelu:
+	- Mame obrazok na vstupe spolu s metadatami (ake je to auto, kedy bolo kde odfotene)
+	- Siet sa sklada z dvoch modulov - globalneho a attention
+		- Global 	- ResNet50
+			 	- vyextrahuje globalne priznaky
+				- extrahuje priznaky z celeho obrazku
+		- Attention	- BoTNet transformer structure
+				- vyextrahuje globalne attention priznaky
+				- tiez extrahuje priznaky z celeho obrazku ale potom vyberie iba tie najviac diskriminativne
+		- grouped convolution 	- kazda groupa sa trenuje na svoju feature aj pre attention aj global a nasledne sa spoja extrahovane informacie dokopy do vysledneho embeddingu
+					- zmensi velkost modelu vdaka grouped convolution - tym ako sa nastavia skupiny tak kazda branch moze pracovat samostatne iba na svojom cieli
+		- LBS 	- Loss branch split
+			- rozdeli proces do viacerych vetvi (classification, metric branch)
+			- classification branch - vykonava classification task
+						- loss funkcia je cross entropy
+			- metric branch	- je zodpovedna za zameranie sa na specificke detaily podla ktorych identifikuje auto
+
+Datasety
+
+Evaluation
+	- mAP	- presnost systemu a ci system nasiel vsetky vyskyty v galerii
+	- CMC1	- spravnost TOP1 vysledku
+	- CMC5	- spravnost TOP5 vysledkov
