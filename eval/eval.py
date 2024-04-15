@@ -1,3 +1,11 @@
+"""
+File: eval.py
+Author: Almeida, Eurico and Silva, Bruno and Batista, Jorge
+Date: 2023
+Project: Strength in Diversity: Multi-Branch Representation Learning for
+Vehicle Re-Identification* (https://github.com/videturfortuna/vehicle_reid_itsc2023)
+"""
+
 import argparse
 import torch
 from torchvision import transforms

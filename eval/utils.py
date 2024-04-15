@@ -1,10 +1,15 @@
+"""
+File: utils.py
+Author: Almeida, Eurico and Silva, Bruno and Batista, Jorge
+Date: 2023
+Project: Strength in Diversity: Multi-Branch Representation Learning for
+Vehicle Re-Identification* (https://github.com/videturfortuna/vehicle_reid_itsc2023)
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
 import gc
-
-
-
 
 def count_parameters(model): return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
