@@ -1,2 +1,5 @@
 baseline/cfg/config.yaml
+baseline/cfg/best_mAP.pt
 eval/__pycache__
+baseline/cfg/result_cmc_l2_True_mean_False.npy
+baseline/cfg/result_map_l2_True_mean_False.npy
