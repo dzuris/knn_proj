@@ -18,7 +18,7 @@ from baseline import MBR_model
 # Usage: <python> eval.py --path_weights <path>
 
 def get_model(data, device):
-    model = MBR_model(class_num=data['n_classes'], n_branches=[], losses="LBS", n_groups=4, LAI=data['LAI'], n_cams=data['n_cams'], n_views=data['n_views'])
+    model = MBR_model(class_num=data['n_classes'], n_branches=["R50", "R50", "BoT", "BoT"], losses="LBS", n_groups=0, LAI=data['LAI'], n_cams=data['n_cams'], n_views=data['n_views'])
     return model.to(device)
 
 def normalize_batch(batch, maximo=None, minimo = None):
@@ -121,6 +121,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Reid train')
 
     parser.add_argument('--path_weights', default=None, help="Path to *.pth/*.pt loading weights file")
+    parser.add_argument('--re_rank', action="store_true", help="Re-Rank")
     args = parser.parse_args()
 
     with open(args.path_weights + "config.yaml", "r") as stream:
