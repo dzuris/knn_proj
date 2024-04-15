@@ -143,30 +143,11 @@ if __name__ == "__main__":
     else:
         scaler=False
 
-    ### Replace paths as needed
-    if data['dataset']== 'VERIWILD':
-        data['n_classes'] = 30671
-        data_q = CustomDataSet4VERIWILD('/home/eurico/VERI-Wild/train_test_split/test_3000_id_query.txt', data['ROOT_DIR'], transform=teste_transform, with_view=True)
-        data_g = CustomDataSet4VERIWILD('/home/eurico/VERI-Wild/train_test_split/test_3000_id.txt', data['ROOT_DIR'], transform=teste_transform, with_view=True)
-        data_q = DataLoader(data_q, batch_size=data['BATCH_SIZE'], shuffle=False, num_workers=data['num_workers_teste']) #data['BATCH_SIZE']
-        data_g = DataLoader(data_g, batch_size=data['BATCH_SIZE'], shuffle=False, num_workers=data['num_workers_teste'])
-
-    if data['dataset']== 'VERIWILD2.0':
-        data['n_classes'] = 30671
-        vw2_dir = "/mnt/DATADISK/Datasets/vehicle/VeriWild/v2.0/"
-        set = 'B' #args.vw2_set A, B or All
-        data_q = CustomDataSet4VERIWILDv2(vw2_dir + 'test_split_V2/'+ set +'_query.txt', vw2_dir, transform=teste_transform, with_view=True)
-        data_g = CustomDataSet4VERIWILDv2(vw2_dir + 'test_split_V2/'+ set +'_gallery.txt', vw2_dir, transform=teste_transform, with_view=True)
-        data_q = DataLoader(data_q, batch_size=data['BATCH_SIZE'], shuffle=False, num_workers=0) #data['BATCH_SIZE'] data['num_workers_teste']
-        data_g = DataLoader(data_g, batch_size=data['BATCH_SIZE'], shuffle=False, num_workers=0)
-
-
     if data['dataset'] == 'Veri776':
         data_q = CustomDataSet4Veri776_withviewpont(data['query_list_file'], data['query_dir'], data['train_keypoint'], data['test_keypoint'], is_train=False, transform=teste_transform)
         data_g = CustomDataSet4Veri776_withviewpont(data['gallery_list_file'], data['teste_dir'], data['train_keypoint'], data['test_keypoint'], is_train=False, transform=teste_transform)
         data_q = DataLoader(data_q, batch_size=data['BATCH_SIZE'], shuffle=False, num_workers=data['num_workers_teste'])
         data_g = DataLoader(data_g, batch_size=data['BATCH_SIZE'], shuffle=False, num_workers=data['num_workers_teste'])
-
 
     # Check if the GPU is available
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -192,37 +173,11 @@ if __name__ == "__main__":
     mean = False
     l2 = True
 
-
-    if data['dataset'] == "VehicleID":
-        list_mAP = []
-        list_cmc1 = []
-        list_cmc5 = []
-        for i in range(10):
-            reader = open('/home/eurico/VehicleID_V1.0/train_test_split/test_list_800.txt')
-            lines = reader.readlines()
-            random.shuffle(lines)
-            data_q = CustomDataSet4VehicleID_Random(lines, data['ROOT_DIR'], is_train=False, mode="q", transform=teste_transform, teste=True)
-            data_g = CustomDataSet4VehicleID_Random(lines, data['ROOT_DIR'], is_train=False, mode="g", transform=teste_transform, teste=True)
-            data_q = DataLoader(data_q, batch_size=data['BATCH_SIZE'], shuffle=False, num_workers=data['num_workers_teste'])
-            data_g = DataLoader(data_g, batch_size=data['BATCH_SIZE'], shuffle=False, num_workers=data['num_workers_teste'])
-            cmc, mAP = test_epoch(model, device, data_q, data_g, data['model_arch'], remove_junk=True, scaler=scaler, re_rank=args.re_rank)
-            list_mAP.append(mAP)
-            list_cmc1.append(cmc[0])
-            list_cmc5.append(cmc[4])
-        mAP = sum(list_mAP) / len(list_mAP)
-        cmc1 = sum(list_cmc1) / len(list_cmc1)
-        cmc5 = sum(list_cmc5) / len(list_cmc5)
-        print(f'\n\nmAP = {mAP},  CMC1= {cmc1}, CMC5= {cmc5}')
-        with open(args.path_weights +'result_map_l2_'+ str(l2) + '_mean_' + str(mean) +'.npy', 'wb') as f:
-            np.save(f, mAP)
-        with open(args.path_weights +'result_cmc_l2_'+ str(l2) + '_mean_' + str(mean) +'.npy', 'wb') as f:
-            np.save(f, cmc1)
-    else:
-        cmc, mAP = test_epoch(model, device, data_q, data_g, data['model_arch'], remove_junk=True, scaler=scaler, re_rank=args.re_rank)
-        print(f'mAP = {mAP},  CMC1= {cmc[0]}, CMC5= {cmc[4]}')
-        with open(args.path_weights +'result_map_l2_'+ str(l2) + '_mean_' + str(mean) +'.npy', 'wb') as f:
-            np.save(f, mAP)
-        with open(args.path_weights +'result_cmc_l2_'+ str(l2) + '_mean_' + str(mean) +'.npy', 'wb') as f:
-            np.save(f, cmc)
+    cmc, mAP = test_epoch(model, device, data_q, data_g, data['model_arch'], remove_junk=True, scaler=scaler, re_rank=args.re_rank)
+    print(f'mAP = {mAP},  CMC1= {cmc[0]}, CMC5= {cmc[4]}')
+    with open(args.path_weights +'result_map_l2_'+ str(l2) + '_mean_' + str(mean) +'.npy', 'wb') as f:
+        np.save(f, mAP)
+    with open(args.path_weights +'result_cmc_l2_'+ str(l2) + '_mean_' + str(mean) +'.npy', 'wb') as f:
+        np.save(f, cmc)
 
     print('Weights: ', path_weights)
