@@ -98,7 +98,14 @@ def re_ranking(probFea, galFea, k1, k2, lambda_value, local_distmat=None, only_l
     return final_dist
 
 def get_model(data, device):
-    model = MBR_model(class_num=data['n_classes'], n_branches=["R50", "R50", "BoT", "BoT"], losses="LBS", n_groups=0, LAI=data['LAI'], n_cams=data['n_cams'], n_views=data['n_views'])
+    ### 4G hybryd with LBS     MBR-4G
+    if data['model_arch'] =='MBR_4G':
+        model = MBR_model(class_num=data['n_classes'], n_branches=[], losses="LBS", n_groups=4, LAI=data['LAI'], n_cams=data['n_cams'], n_views=data['n_views'])
+    
+    ### MBR-4B (4B hybrid LBS)
+    if data['model_arch'] == 'MBR_4B':
+        model = MBR_model(class_num=data['n_classes'], n_branches=["R50", "R50", "BoT", "BoT"], losses="LBS", n_groups=0, LAI=data['LAI'], n_cams=data['n_cams'], n_views=data['n_views'])
+
     return model.to(device)
 
 def normalize_batch(batch, maximo=None, minimo = None):
