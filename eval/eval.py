@@ -13,7 +13,7 @@ import torch.nn as nn
 import os
 import yaml
 from utils import re_ranking
-from baseline import *
+from baseline import MBR_model
 
 # Usage: <python> eval.py --path_weights <path>
 
@@ -126,9 +126,9 @@ if __name__ == "__main__":
     with open(args.path_weights + "config.yaml", "r") as stream:
         data = yaml.safe_load(stream)
 
-    data['BATCH_SIZE'] = args.batch_size or data['BATCH_SIZE']
-    data['dataset'] = args.dataset or data['dataset']
-    data['model_arch'] = args.model_arch or data['model_arch']
+    # data['BATCH_SIZE'] = args.batch_size or data['BATCH_SIZE']
+    # data['dataset'] = args.dataset or data['dataset']
+    # data['model_arch'] = args.model_arch or data['model_arch']
 
 
     teste_transform = transforms.Compose([
@@ -171,7 +171,7 @@ if __name__ == "__main__":
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     print(f'Selected device: {device}')
 
-    model = get_model(data, torch.device("cpu"))
+    model = get_model(data, device)
 
     # One of the saved weights last.pt best_CMC.pt best_mAP.pt
     path_weights = args.path_weights + 'best_mAP.pt'
