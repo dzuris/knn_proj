@@ -18,9 +18,7 @@ from triplet_sampler import *
 from typing import OrderedDict
 import torch.multiprocessing
 import torch.nn as nn
-import os
 import yaml
-from utils import re_ranking
 from baseline import MBR_model
 
 # Usage: <python> eval.py --path_weights <path>
