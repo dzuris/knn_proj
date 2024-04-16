@@ -11,7 +11,7 @@ To run baseline:
 5. Install dependences if needed and run again
 6. Enjoy
 
-Our results from evaluation:
+The results from evaluation:
 
 | mAP | CMC1 | CMC5 |
 | :-: | :-: | :-: |
