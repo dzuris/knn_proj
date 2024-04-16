@@ -63,11 +63,11 @@ query_list_file: C:\Users\adamd\Downloads\VeRi\VeRi\name_query.txt
 scale_circle: 64
 sched_name: Warm_MultiStep
 softmax_loss: torch_ce
-test_keypoint: C:\Users\adamd\Github\vehicle_reid_itsc2023\dataset\VeRi\keypoint_orient_test.txt
+test_keypoint: C:\Users\adamd\Github\knn_proj\datasets\VeRi776\keypoint_orient_test.txt
 teste_dir: C:\Users\adamd\Downloads\VeRi\VeRi\image_test
 torch_seed: 0
 train_dir: C:\Users\adamd\Downloads\VeRi\VeRi\image_train
-train_keypoint: C:\Users\adamd\Github\vehicle_reid_itsc2023\dataset\VeRi\keypoint_orient_train.txt
+train_keypoint: C:\Users\adamd\Github\knn_proj\datasets\VeRi776\keypoint_orient_train.txt
 train_list_file: C:\Users\adamd\Downloads\VeRi\VeRi\name_train.txt
 triplet_margin: 0.1
 triplet_margin_trans: 0.1
