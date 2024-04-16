@@ -214,6 +214,7 @@ if __name__ == "__main__":
     with open(args.path_weights + "config.yaml", "r") as stream:
         data = yaml.safe_load(stream)
 
+    # If commented, the data are taken directly from config file
     # data['BATCH_SIZE'] = args.batch_size or data['BATCH_SIZE']
     # data['dataset'] = args.dataset or data['dataset']
     # data['model_arch'] = args.model_arch or data['model_arch']
