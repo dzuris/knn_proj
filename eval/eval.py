@@ -260,7 +260,6 @@ if __name__ == "__main__":
     l2 = True
 
     cmc, mAP = test_epoch(model, device, data_q, data_g, data['model_arch'], remove_junk=True, scaler=scaler, re_rank=args.re_rank)
-    print(f'mAP = {mAP},  CMC1= {cmc[0]}, CMC5= {cmc[4]}')
     with open(args.path_weights +'result_map_l2_'+ str(l2) + '_mean_' + str(mean) +'.npy', 'wb') as f:
         np.save(f, mAP)
     with open(args.path_weights +'result_cmc_l2_'+ str(l2) + '_mean_' + str(mean) +'.npy', 'wb') as f:
