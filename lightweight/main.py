@@ -7,6 +7,8 @@ import baseline
 import triplet_sampler as trs
 # from eval import eval, metric, baseline, triplet_sampler
 
+import lwmodel as lw
+
 # import eval.eval as bs # import baseline
 import torch
 import torch.nn as nn
@@ -18,13 +20,13 @@ from tqdm import tqdm
 import yaml
 # some definitions necessary to be global
 
-def getLeightweightModel():
+def getLeightweightModel(data):
     # model = torch.hub.load('XingangPan/IBN-Net', 'resnet50_ibn_a', pretrained=True)
     # download mobilenet and set its weights
-    model = models.mobilenet_v2(weights=models.MobileNet_V2_Weights.IMAGENET1K_V2) # torch.hub.load('pytorch/vision:v0.10.0', 'mobilenet_v2', pretrained=True)
-    print(model.classifier)
-    print('Number of parameters: ', sum(p.numel() for p in model.parameters()))
-    
+    # model = models.mobilenet_v2(weights=models.MobileNet_V2_Weights.IMAGENET1K_V2) # torch.hub.load('pytorch/vision:v0.10.0', 'mobilenet_v2', pretrained=True)
+    # print(model.classifier)
+    # print('Number of parameters: ', sum(p.numel() for p in model.parameters()))
+    model = lw.LWModel(data['n_classes'])
     return model.to(device)
 
 def getTeacherModel(weight_path, data):
@@ -80,12 +82,17 @@ def getDatasetInParts(path, data, dataset='VERIWILD'):
 
 def do_training(m_student, m_teacher, dataloader, num_epochs):
     optimizer = torch.optim.Adam(params=m_student.parameters(), lr=0.0001)
-        
+    
+    print('training starts ...')
     for epoch in range(num_epochs):
         losses = []
         for image_batch, label, cam, view in dataloader: #tqdm(dataloader, desc='Epoch ' + str(epoch+1) +' (%)' , bar_format='{l_bar}{bar:20}{r_bar}'): 
             image_batch = image_batch.to(device)
+            
             preds, embs, ffs, activations = m_teacher(image_batch, cam, view)
+            print('teacher done ...')
+            stud_emb = m_student(image_batch)
+            print('student done ...')
             # print()
             exit()
             # optimizer.zero_grad()
@@ -93,7 +100,7 @@ def do_training(m_student, m_teacher, dataloader, num_epochs):
           
 if __name__ == '__main__':
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    print(f'Selected model is: {device}')
+    print(f'Selected device is: {device}')
 
     # setup
     data = {
@@ -131,7 +138,7 @@ if __name__ == '__main__':
     ])       
     
     m_teacher = getTeacherModel(weight_path='baseline/cfg/best_mAP.pt',data=data)
-    m_student = getLeightweightModel().train() # set the lightweight model for training
+    m_student = getLeightweightModel(data).train() # set the lightweight model for training
     data_train, data_g, data_q = getDatasetInParts(path="C:/Users/holan/Downloads/VeriWild", data=data)
     
     # start training
