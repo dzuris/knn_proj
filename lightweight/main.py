@@ -13,10 +13,10 @@ import torch.nn as nn
 import torch.utils.data as td
 import torchvision.models as models
 from torchvision import transforms
-from tqdm import tqdm
 
+from tqdm import tqdm
+import yaml
 # some definitions necessary to be global
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 def getLeightweightModel():
     # model = torch.hub.load('XingangPan/IBN-Net', 'resnet50_ibn_a', pretrained=True)
@@ -25,25 +25,28 @@ def getLeightweightModel():
     model = model.to(device)
     print(model.classifier)
     print('Number of parameters: ', sum(p.numel() for p in model.parameters()))
+    
     return model
 
-def getTeacherModel(weight_path, model_type='MBR_4G'):
+def getTeacherModel(weight_path, data):
     """
     Args:
         weight_path : path to the file *.pt with weights for the model_type
         model_type : type of the used model [MBR_4G|MBR_4B]
     """
     # get model according to the type 
-    model = eval.get_model(model_type, device)
+    model = eval.get_model(data, device)
     model.load_state_dict(torch.load(weight_path, map_location='cpu')) 
     model = model.to(device)
     model.eval() # this model will always just produce results, it wont be trained
+    
+    return model
 
-def getDatasetInParts(path, data, dataset='VERI-Wild'):
+def getDatasetInParts(path, data, dataset='VERIWILD'):
     """
     Args:
         path : path to the root folder of the dataset (not to exact files!)
-        dataset : [VERI-Wild|VehicleID|Veri776]
+        dataset : [VERIWILD|VehicleID|Veri776]
     Return:
         data_train, data_g, data_q
     """
@@ -53,13 +56,13 @@ def getDatasetInParts(path, data, dataset='VERI-Wild'):
         data_q = trs.CustomDataSet4VehicleID(path+'/train_test_split/test_list_800.txt', path+'/image/', is_train=False, mode="q", transform=test_transform)
         data_g = trs.CustomDataSet4VehicleID(path+'/train_test_split/test_list_800.txt', path+'/image/', is_train=False, mode="g", transform=test_transform)
         data_train = trs.CustomDataSet4VehicleID(path+"/train_test_split/train_list.txt", path+'/image/', is_train=True, transform=train_transform)
-        data_train = trs.DataLoader(data_train, sampler=trs.RandomIdentitySampler(data_train, batch_size, data['NUM_INSTANCES']), num_workers=data['num_workers_train'], batch_size = batch_size, collate_fn=trs.train_collate_fn, pin_memory=True)#
+        data_train = trs.DataLoader(data_train, sampler=trs.RandomIdentitySampler(data_train, data['BATCH_SIZE'], data['NUM_INSTANCES']), num_workers=data['num_workers_train'], batch_size = data['BATCH_SIZE'], collate_fn=trs.train_collate_fn, pin_memory=True)#
         data_q = trs.DataLoader(data_q, batch_size=data['BATCH_SIZE'], shuffle=False, num_workers=data['num_workers_teste'])
         data_g = trs.DataLoader(data_g, batch_size=data['BATCH_SIZE'], shuffle=False, num_workers=data['num_workers_teste'])
     if dataset == 'VERIWILD':
         data_q = trs.CustomDataSet4VERIWILD(path+'/train_test_split/test_3000_id_query.txt', path+'/images/', transform=test_transform, with_view=False)
         data_g = trs.CustomDataSet4VERIWILD(path+'/train_test_split/test_3000_id.txt', path+'/images/', transform=test_transform, with_view=False)
-        data_train = trs.CustomDataSet4VERIWILD(path+'/train_test_split/train_list.txt', path+'/images/', transform=train_transform, with_view=False)
+        data_train = trs.CustomDataSet4VERIWILD(path+'/train_test_split/train_list_start0.txt', path+'/images/', transform=train_transform, with_view=False)
         data_train = td.DataLoader(data_train, sampler=trs.RandomIdentitySampler(data_train, data['BATCH_SIZE'], data['NUM_INSTANCES']), num_workers=data['num_workers_train'], batch_size = data['BATCH_SIZE'], collate_fn=trs.train_collate_fn, pin_memory=True)
         data_q = td.DataLoader(data_q, batch_size=data['BATCH_SIZE'], shuffle=False, num_workers=data['num_workers_teste'])
         data_g = td.DataLoader(data_g, batch_size=data['BATCH_SIZE'], shuffle=False, num_workers=data['num_workers_teste'])
@@ -78,14 +81,29 @@ def getDatasetInParts(path, data, dataset='VERI-Wild'):
     return data_train, data_g, data_q
 
 def do_training(m_student, m_teacher, dataloader, num_epochs):
-    optimizer = torch.optim.Adam(lr=0.0001)
+    optimizer = torch.optim.Adam(params=m_student.parameters(), lr=0.0001)
+    m_teacher = m_teacher.to(device)
+    m_teacher.eval()
     
     for epoch in range(num_epochs):
-        for image_batch, label, cam, view in tqdm(dataloader, desc='Epoch ' + str(epoch+1) +' (%)' , bar_format='{l_bar}{bar:20}{r_bar}'): 
+        losses = []
+        for image_batch, label, cam, view in dataloader: #tqdm(dataloader, desc='Epoch ' + str(epoch+1) +' (%)' , bar_format='{l_bar}{bar:20}{r_bar}'): 
+            image_batch = image_batch.to(device)
+            preds, embs, ffs, activations = m_teacher(image_batch, cam, view)
+            # print()
+            exit()
+            # optimizer.zero_grad()
             
+          
 if __name__ == '__main__':
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    print(f'Selected model is: {device}')
+
     # setup
     data = {
+        'model_arch':'MBR_4G',
+        'n_classes': 20,
+        
         'y_length':256,
         'x_length':256,
         
@@ -97,6 +115,8 @@ if __name__ == '__main__':
         'num_workers_teste': 16,
         'num_workers_train': 8
     }
+    with open('baseline/cfg/' + "config.yaml", "r") as stream:
+        data = yaml.safe_load(stream)
     # ======
     
     # create transforms, that will be applied to the test and train 
@@ -113,8 +133,13 @@ if __name__ == '__main__':
                 transforms.Normalize(data['n_mean'], data['n_std']),
                 # transforms.RandomErasing(p=data['p_rerase'], value=0),
     ])       
-# set model for training
-# model.train()
+    
+    m_teacher = getTeacherModel(weight_path='baseline/cfg/best_mAP.pt',data=data)
+    m_student = getLeightweightModel().train() # set the lightweight model for training
+    data_train, data_g, data_q = getDatasetInParts(path="C:/Users/holan/Downloads/VeriWild", data=data)
+    
+    # start training
+    do_training(m_student=m_student, m_teacher=m_teacher, dataloader=data_train, num_epochs=1)
     
 
 
