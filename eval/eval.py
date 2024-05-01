@@ -221,7 +221,6 @@ if __name__ == "__main__":
     teste_transform = transforms.Compose([
                     transforms.Resize((data['y_length'],data['x_length']), antialias=True),
                     transforms.Normalize(data['n_mean'], data['n_std']),
-
     ])                  
 
     if data['half_precision']:
