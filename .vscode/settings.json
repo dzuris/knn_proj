@@ -1,0 +1,6 @@
+{
+	"python.analysis.extraPaths": [
+		"/home/johnny/.local/lib/python3.10/site-packages",
+		"./eval"
+	]
+}
