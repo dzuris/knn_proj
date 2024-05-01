@@ -22,11 +22,10 @@ def getLeightweightModel():
     # model = torch.hub.load('XingangPan/IBN-Net', 'resnet50_ibn_a', pretrained=True)
     # download mobilenet and set its weights
     model = models.mobilenet_v2(weights=models.MobileNet_V2_Weights.IMAGENET1K_V2) # torch.hub.load('pytorch/vision:v0.10.0', 'mobilenet_v2', pretrained=True)
-    model = model.to(device)
     print(model.classifier)
     print('Number of parameters: ', sum(p.numel() for p in model.parameters()))
     
-    return model
+    return model.to(device)
 
 def getTeacherModel(weight_path, data):
     """
@@ -37,10 +36,9 @@ def getTeacherModel(weight_path, data):
     # get model according to the type 
     model = eval.get_model(data, device)
     model.load_state_dict(torch.load(weight_path, map_location='cpu')) 
-    model = model.to(device)
     model.eval() # this model will always just produce results, it wont be trained
     
-    return model
+    return model.to(device)
 
 def getDatasetInParts(path, data, dataset='VERIWILD'):
     """
@@ -82,9 +80,7 @@ def getDatasetInParts(path, data, dataset='VERIWILD'):
 
 def do_training(m_student, m_teacher, dataloader, num_epochs):
     optimizer = torch.optim.Adam(params=m_student.parameters(), lr=0.0001)
-    m_teacher = m_teacher.to(device)
-    m_teacher.eval()
-    
+        
     for epoch in range(num_epochs):
         losses = []
         for image_batch, label, cam, view in dataloader: #tqdm(dataloader, desc='Epoch ' + str(epoch+1) +' (%)' , bar_format='{l_bar}{bar:20}{r_bar}'): 
