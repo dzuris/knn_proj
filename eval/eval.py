@@ -270,7 +270,7 @@ if __name__ == "__main__":
         list_cmc1 = []
         list_cmc5 = []
         for i in range(10):
-            reader = open('/home/eurico/VehicleID_V1.0/train_test_split/test_list_800.txt')
+            reader = open('C:/Users/adamd/Downloads/VehicleID_V1.0/VehicleID_V1.0/train_test_split/test_list_800.txt')
             lines = reader.readlines()
             random.shuffle(lines)
             data_q = CustomDataSet4VehicleID_Random(lines, data['ROOT_DIR'], is_train=False, mode="q", transform=teste_transform, teste=True)
@@ -297,10 +297,10 @@ if __name__ == "__main__":
         with open(args.path_weights +'result_cmc_l2_'+ str(l2) + '_mean_' + str(mean) +'.npy', 'wb') as f:
             np.save(f, cmc)
 
-    cmc, mAP = test_epoch(model, device, data_q, data_g, data['model_arch'], remove_junk=True, scaler=scaler, re_rank=args.re_rank)
-    with open(args.path_weights +'result_map_l2_'+ str(l2) + '_mean_' + str(mean) +'.npy', 'wb') as f:
-        np.save(f, mAP)
-    with open(args.path_weights +'result_cmc_l2_'+ str(l2) + '_mean_' + str(mean) +'.npy', 'wb') as f:
-        np.save(f, cmc)
+    # cmc, mAP = test_epoch(model, device, data_q, data_g, data['model_arch'], remove_junk=True, scaler=scaler, re_rank=args.re_rank)
+    # with open(args.path_weights +'result_map_l2_'+ str(l2) + '_mean_' + str(mean) +'.npy', 'wb') as f:
+    #     np.save(f, mAP)
+    # with open(args.path_weights +'result_cmc_l2_'+ str(l2) + '_mean_' + str(mean) +'.npy', 'wb') as f:
+    #     np.save(f, cmc)
 
     print('Weights: ', path_weights)
