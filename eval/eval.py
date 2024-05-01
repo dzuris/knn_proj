@@ -265,6 +265,38 @@ if __name__ == "__main__":
     mean = False
     l2 = True
 
+    if data['dataset'] == "VehicleID":
+        list_mAP = []
+        list_cmc1 = []
+        list_cmc5 = []
+        for i in range(10):
+            reader = open('/home/eurico/VehicleID_V1.0/train_test_split/test_list_800.txt')
+            lines = reader.readlines()
+            random.shuffle(lines)
+            data_q = CustomDataSet4VehicleID_Random(lines, data['ROOT_DIR'], is_train=False, mode="q", transform=teste_transform, teste=True)
+            data_g = CustomDataSet4VehicleID_Random(lines, data['ROOT_DIR'], is_train=False, mode="g", transform=teste_transform, teste=True)
+            data_q = DataLoader(data_q, batch_size=data['BATCH_SIZE'], shuffle=False, num_workers=data['num_workers_teste'])
+            data_g = DataLoader(data_g, batch_size=data['BATCH_SIZE'], shuffle=False, num_workers=data['num_workers_teste'])
+            cmc, mAP = test_epoch(model, device, data_q, data_g, data['model_arch'], remove_junk=True, scaler=scaler, re_rank=args.re_rank)
+            list_mAP.append(mAP)
+            list_cmc1.append(cmc[0])
+            list_cmc5.append(cmc[4])
+        mAP = sum(list_mAP) / len(list_mAP)
+        cmc1 = sum(list_cmc1) / len(list_cmc1)
+        cmc5 = sum(list_cmc5) / len(list_cmc5)
+        print(f'\n\nmAP = {mAP},  CMC1= {cmc1}, CMC5= {cmc5}')
+        with open(args.path_weights +'result_map_l2_'+ str(l2) + '_mean_' + str(mean) +'.npy', 'wb') as f:
+            np.save(f, mAP)
+        with open(args.path_weights +'result_cmc_l2_'+ str(l2) + '_mean_' + str(mean) +'.npy', 'wb') as f:
+            np.save(f, cmc1)
+    else:
+        cmc, mAP = test_epoch(model, device, data_q, data_g, data['model_arch'], remove_junk=True, scaler=scaler, re_rank=args.re_rank)
+        print(f'mAP = {mAP},  CMC1= {cmc[0]}, CMC5= {cmc[4]}')
+        with open(args.path_weights +'result_map_l2_'+ str(l2) + '_mean_' + str(mean) +'.npy', 'wb') as f:
+            np.save(f, mAP)
+        with open(args.path_weights +'result_cmc_l2_'+ str(l2) + '_mean_' + str(mean) +'.npy', 'wb') as f:
+            np.save(f, cmc)
+
     cmc, mAP = test_epoch(model, device, data_q, data_g, data['model_arch'], remove_junk=True, scaler=scaler, re_rank=args.re_rank)
     with open(args.path_weights +'result_map_l2_'+ str(l2) + '_mean_' + str(mean) +'.npy', 'wb') as f:
         np.save(f, mAP)
