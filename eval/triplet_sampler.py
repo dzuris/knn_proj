@@ -71,9 +71,6 @@ class CustomDataSet4VERIWILD(Dataset):
             return img, vid, camid, 0
 
 
-
-
-
 class CustomDataSet4VERIWILDv2(Dataset):
     """VeriWild 2.0 dataset."""
 
@@ -114,7 +111,6 @@ class CustomDataSet4VERIWILDv2(Dataset):
             return img, vid, camid, view_id
         else:
             return img, vid, camid
-
 
 
 class RandomIdentitySampler(Sampler):
@@ -241,9 +237,6 @@ class CustomDataSet4Market1501(Dataset):
 
         return img, vid, camid     
 
-       
- 
-
 
 class CustomDataSet4Veri776(Dataset):
     """Face Landmarks dataset."""
@@ -306,10 +299,6 @@ class CustomDataSet4Veri776(Dataset):
             img = self.transform((image.type(torch.FloatTensor))/255.0)
 
         return img, vid, camid, 0 
-
-
-
-
 
 
 class CustomDataSet4Veri776_withviewpont(Dataset):
@@ -390,6 +379,7 @@ class CustomDataSet4Veri776_withviewpont(Dataset):
 
         return img, vid, camid, viewid     
 
+
 class CustomDataSet4VehicleID_Random(Dataset):
     def __init__(self, lines, root_dir, is_train=True, mode=None, transform=None, teste=False):
         """
@@ -465,9 +455,6 @@ class CustomDataSet4VehicleID_Random(Dataset):
             return img, vid, camid
 
 
-
-
-
 class CustomDataSet4VehicleID(Dataset):
     def __init__(self, image_list, root_dir, is_train=True, mode=None, transform=None):
         """
@@ -539,5 +526,3 @@ class CustomDataSet4VehicleID(Dataset):
             img = self.transform((image.type(torch.FloatTensor))/255.0)
 
         return img, vid, camid, 0
-
-
