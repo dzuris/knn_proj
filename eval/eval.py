@@ -268,6 +268,11 @@ if __name__ == "__main__":
     model = model.to(device)
     model.eval()
 
+    # params_count = "{:,}".format(sum(p.numel() for p in model.parameters()))
+    # params_count = params_count.replace(",", " ")
+    # print("Params count:", params_count)
+    # exit(0)
+
     mean = False
     l2 = True
 

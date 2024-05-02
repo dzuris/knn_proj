@@ -4,3 +4,4 @@ baseline/cfg4B_notLAI
 eval/__pycache__
 baseline/cfg/result_cmc_l2_True_mean_False.npy
 baseline/cfg/result_map_l2_True_mean_False.npy
+lightweight/__pycache__/*

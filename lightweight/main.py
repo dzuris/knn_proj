@@ -21,6 +21,21 @@ from tqdm import tqdm
 import yaml
 # some definitions necessary to be global
 
+
+# Define the Distillation Loss
+class DistillationLoss(nn.Module):
+    def __init__(self, temperature=3):
+        super(DistillationLoss, self).__init__()
+        self.temperature = temperature
+        self.softmax = nn.Softmax(dim=1)
+        self.kl_div_loss = nn.KLDivLoss(reduction='batchmean')
+
+    def forward(self, student_outputs, teacher_outputs):
+        student_probs = self.softmax(student_outputs / self.temperature)
+        teacher_probs = self.softmax(teacher_outputs[0][0] / self.temperature)  # TODO: Absolutely not sure about teacher_outputs[0][0]
+        return self.kl_div_loss(student_probs, teacher_probs)
+
+
 def getLeightweightModel(data):
     # model = torch.hub.load('XingangPan/IBN-Net', 'resnet50_ibn_a', pretrained=True)
     # download mobilenet and set its weights
@@ -81,28 +96,71 @@ def getDatasetInParts(path, data, dataset='VERIWILD'):
 
     return data_train, data_g, data_q
 
+
 def do_training(m_student, m_teacher, dataloader, num_epochs):
     optimizer = torch.optim.Adam(params=m_student.parameters(), lr=0.0001)
+    criterion = nn.CrossEntropyLoss() # Define the classification loss
+    distillation_loss = DistillationLoss() # Define the distillation loss
     
-    print('training starts ...')
+    print('Training starts ...')
     for epoch in range(num_epochs):
-        losses = []
-        for image_batch, label, cam, view in dataloader: #tqdm(dataloader, desc='Epoch ' + str(epoch+1) +' (%)' , bar_format='{l_bar}{bar:20}{r_bar}'): 
-            image_batch = image_batch.to(device)
+        # losses = []
+        # TODO: This can probably be removed as they already are set to train and eval
+        m_student.train()   # Set the student model to training mode
+        m_teacher.eval()    # Set the teacher model to evaluation mode
+
+        running_loss = 0.0
+        for inputs, labels, cams, views in tqdm(dataloader, desc=f'Epoch {epoch+1}/{num_epochs}'):
+            inputs, labels = inputs.to(device), labels.to(device)
+
+            # Zero the parameter gradients
+            optimizer.zero_grad()
+
+            # Forward pass: student model
+            student_outputs = m_student(inputs)
+
+            # Forward pass: teacher model
+            with torch.no_grad():
+                teacher_outputs = m_teacher(inputs, cams, views)
+
+            # Compute the classification loss
+            classification_loss = criterion(student_outputs, labels)
+
+            # Compute the distillation loss
+            distillation_loss_value = distillation_loss(student_outputs, teacher_outputs)
+
+            # Total loss: weigted sum of classification and distillation losses
+            alpha = 0.5
+            loss = alpha * classification_loss + (1 - alpha) * distillation_loss_value
+
+            # Backward pass and optimize
+            loss.backward()
+            optimizer.step()
+
+            # Update running loss
+            running_loss += loss.item() * inputs.size(0)
+
+        # Print average loss for the epoch
+        epoch_loss = running_loss / len(dataloader.dataset)
+        print(f'Epoch {epoch+1}/{num_epochs}, Loss: {epoch_loss:.4f}')
+        # TODO: Somehow save the model
+
+        # for image_batch, label, cam, view in dataloader: #tqdm(dataloader, desc='Epoch ' + str(epoch+1) +' (%)' , bar_format='{l_bar}{bar:20}{r_bar}'): 
+        #     image_batch = image_batch.to(device)
             
-            preds, embs, ffs, activations = m_teacher(image_batch, cam, view)
+        #     preds, embs, ffs, activations = m_teacher(image_batch, cam, view)
             
-            print('teacher done ...',
-                  torch.stack(preds).detach().cpu().numpy().shape, 
-                  torch.stack(embs).detach().cpu().numpy().shape, 
-                  torch.stack(ffs).detach().cpu().numpy().shape, 
-                  torch.stack(activations).detach().cpu().numpy().shape)
+        #     print('teacher done ...',
+        #           torch.stack(preds).detach().cpu().numpy().shape, 
+        #           torch.stack(embs).detach().cpu().numpy().shape, 
+        #           torch.stack(ffs).detach().cpu().numpy().shape, 
+        #           torch.stack(activations).detach().cpu().numpy().shape)
             
-            stud_emb = m_student(image_batch)
-            print('student done ...', stud_emb.detach().cpu().numpy().shape)
-            # print()
-            exit()
-            # optimizer.zero_grad()
+        #     stud_emb = m_student(image_batch)
+        #     print('student done ...', stud_emb.detach().cpu().numpy().shape)
+        #     # print()
+        #     exit()
+        #     # optimizer.zero_grad()
             
           
 if __name__ == '__main__':
@@ -146,7 +204,7 @@ if __name__ == '__main__':
     
     m_teacher = getTeacherModel(weight_path='baseline/cfg/best_mAP.pt',data=data)
     m_student = getLeightweightModel(data).train() # set the lightweight model for training
-    data_train, data_g, data_q = getDatasetInParts(path="C:/Users/holan/Downloads/VeriWild", data=data)
+    data_train, data_g, data_q = getDatasetInParts(path="C:/Users/adamd/Downloads/VeRi/VeRi", data=data, dataset='Veri776')
     
     # start training
     do_training(m_student=m_student, m_teacher=m_teacher, dataloader=data_train, num_epochs=1)
