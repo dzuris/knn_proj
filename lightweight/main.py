@@ -33,6 +33,11 @@ class DistillationLoss(nn.Module):
     def forward(self, student_outputs, teacher_outputs):
         student_probs = self.softmax(student_outputs / self.temperature)
         teacher_probs = self.softmax(teacher_outputs[0][0] / self.temperature)  # TODO: Absolutely not sure about teacher_outputs[0][0]
+                                                                                # It makes sense a little... because the teacher outputs actually consists of four 
+                                                                                # other items - preds, embs, ffs, activations ... so [0][0] will dereference
+                                                                                # the `preds` and they are of shape (2,48,575) so the next dereferencing will
+                                                                                # get the first classification vector for each of 48 images
+                                                                                
         return self.kl_div_loss(student_probs, teacher_probs)
 
 
@@ -143,8 +148,10 @@ def do_training(m_student, m_teacher, dataloader, num_epochs):
         # Print average loss for the epoch
         epoch_loss = running_loss / len(dataloader.dataset)
         print(f'Epoch {epoch+1}/{num_epochs}, Loss: {epoch_loss:.4f}')
-        # TODO: Somehow save the model
-
+    
+    # Save the model
+    torch.save(m_student.state_dict(), 'lightweight/trained_models/try1.pt')
+        
         # for image_batch, label, cam, view in dataloader: #tqdm(dataloader, desc='Epoch ' + str(epoch+1) +' (%)' , bar_format='{l_bar}{bar:20}{r_bar}'): 
         #     image_batch = image_batch.to(device)
             
@@ -204,7 +211,7 @@ if __name__ == '__main__':
     
     m_teacher = getTeacherModel(weight_path='baseline/cfg/best_mAP.pt',data=data)
     m_student = getLeightweightModel(data).train() # set the lightweight model for training
-    data_train, data_g, data_q = getDatasetInParts(path="C:/Users/adamd/Downloads/VeRi/VeRi", data=data, dataset='Veri776')
+    data_train, data_g, data_q = getDatasetInParts(path="C:/Users/holan/Downloads/VeRi/VeRi", data=data, dataset='Veri776')
     
     # start training
     do_training(m_student=m_student, m_teacher=m_teacher, dataloader=data_train, num_epochs=1)
