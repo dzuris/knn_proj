@@ -10,7 +10,7 @@ class LWModel(nn.Module):
     """
     def __init__(self, n_classes) -> None:
         super(LWModel, self).__init__()
-        self.model = models.mobilenet_v2(weights = models.mobilenet_v2(weights=models.MobileNet_V2_Weights.IMAGENET1K_V2))
+        self.model = models.mobilenet_v2(weights=models.MobileNet_V2_Weights.IMAGENET1K_V2)
         
         num_ftrs = self.model.classifier[1].in_features
         self.model.classifier[1] = nn.Linear(num_ftrs, n_classes)

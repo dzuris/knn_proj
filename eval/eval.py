@@ -145,12 +145,18 @@ def test_epoch(model, device, dataloader_q, dataloader_g, model_arch, remove_jun
                     _, _, ffs, activations = model(image, cam_id, view_id)
             else:
                 _, _, ffs, activations = model(image, cam_id, view_id)
-                    
+            
+            # print(f'activations: {torch.stack(activations).detach().cpu().numpy().shape}')
+            
             count_imgs += activations[0].shape[0]
             end_vec = []
             for item in ffs:
                 end_vec.append(F.normalize(item))
             qf.append(torch.cat(end_vec, 1))
+            # print(f'qf: {torch.stack(qf).detach().cpu().numpy().shape}')
+            
+            # exit()
+            
             q_vids.append(q_id)
             q_camids.append(cam_id)
 

@@ -15,6 +15,7 @@ import torch.nn as nn
 import torch.utils.data as td
 import torchvision.models as models
 from torchvision import transforms
+import numpy as np
 
 from tqdm import tqdm
 import yaml
@@ -90,9 +91,15 @@ def do_training(m_student, m_teacher, dataloader, num_epochs):
             image_batch = image_batch.to(device)
             
             preds, embs, ffs, activations = m_teacher(image_batch, cam, view)
-            print('teacher done ...')
+            
+            print('teacher done ...',
+                  torch.stack(preds).detach().cpu().numpy().shape, 
+                  torch.stack(embs).detach().cpu().numpy().shape, 
+                  torch.stack(ffs).detach().cpu().numpy().shape, 
+                  torch.stack(activations).detach().cpu().numpy().shape)
+            
             stud_emb = m_student(image_batch)
-            print('student done ...')
+            print('student done ...', stud_emb.detach().cpu().numpy().shape)
             # print()
             exit()
             # optimizer.zero_grad()
