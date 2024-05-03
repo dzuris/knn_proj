@@ -24,7 +24,11 @@ from torch.utils.data import DataLoader
 from typing import OrderedDict
 import torch.multiprocessing
 import yaml
+from torchvision.models import mobilenet_v3_small, MobileNet_V3_Small_Weights
+import time
 
+import sys
+sys.path.insert(0, 'eval')
 from metric import eval_func
 from baseline import MBR_model, ClassBlock, Bottleneck_Transformer, MHSA, weights_init_kaiming, weights_init_classifier
 from triplet_sampler import train_collate_fn, CustomDataSet4VERIWILD, CustomDataSet4VERIWILDv2, RandomIdentitySampler, CustomDataSet4Market1501, CustomDataSet4Veri776, CustomDataSet4Veri776_withviewpont, CustomDataSet4VehicleID_Random, CustomDataSet4VehicleID
@@ -346,8 +350,6 @@ class FinalLayer(nn.Module):
         return preds, embs, ffs
 
 
-from torchvision.models import mobilenet_v3_small, MobileNet_V3_Small_Weights
-
 class LightNN(nn.Module):
     def __init__(self, class_num, n_branches, n_groups, losses="LBS", backbone="ibn", droprate=0, linear_num=False, return_f = True, circle_softmax=False, pretrain_ongroups=True, end_bot_g=False, group_conv_mhsa=False, group_conv_mhsa_2=False, x2g=False, x4g=False, LAI=False, n_cams=0, n_views=0):
         super(LightNN, self).__init__()
@@ -383,7 +385,7 @@ class LightNN(nn.Module):
     
 import torch.optim as optim
 
-def train_knowledge_distillation(teacher, student, train_loader, epochs, device, teacherGamma, teacherAlpha):#, learning_rate, T, soft_target_loss_weight, ce_loss_weight):
+def train_knowledge_distillation(teacher, student, train_loader, epochs, device, teacherGamma, teacherAlpha, unix_time=0):#, learning_rate, T, soft_target_loss_weight, ce_loss_weight):
     TEMPERATURE = 1.
     ALPHA = 0.4
 
@@ -391,6 +393,9 @@ def train_knowledge_distillation(teacher, student, train_loader, epochs, device,
 
     teacher.eval()  # Teacher set to evaluation mode
     student.train() # Student to train mode
+
+    # After which epochs the weights should be saved
+    list_of_epochs = [1, 5, 10, 50, 100]
 
     for epoch in range(epochs):
         running_loss = 0.0
@@ -432,8 +437,13 @@ def train_knowledge_distillation(teacher, student, train_loader, epochs, device,
         epoch_loss = running_loss / len(train_loader.dataset)
         print(f'Epoch {epoch+1}/{epochs}, Loss: {epoch_loss:.4f}')
 
+        if epoch in list_of_epochs and epoch != epochs:
+            # Save the weights with unix time to avoid overriding files
+            torch.save(student.state_dict(), "light_" + str(epoch) + "_" + str(unix_time) + ".pth")
+
+
 if __name__ == "__main__":
-    args_path_weights = "../baseline/cfg/"
+    args_path_weights = "baseline/cfg/"
     args_re_rank = False
 
     with open(args_path_weights + "config.yaml", "r") as stream:
@@ -514,5 +524,13 @@ if __name__ == "__main__":
     teacher.to(device)
     student.to(device)
 
-    train_knowledge_distillation(teacher, student, data_train, 1, device, data['gamma_ce'], data['alpha_ce'])
-    torch.save(student.state_dict(), "light.pth")
+    
+    # Get the current time in Unix format
+    unix_time = int(time.time())
+
+    # How many epochs should run
+    epochs_count = 1
+    train_knowledge_distillation(teacher, student, data_train, epochs_count, device, data['gamma_ce'], data['alpha_ce'], unix_time=unix_time)
+
+    # Save the weights with unix time to avoid overriding files
+    torch.save(student.state_dict(), "light_" + str(unix_time) + ".pth")
