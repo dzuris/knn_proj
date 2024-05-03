@@ -25,10 +25,10 @@ from typing import OrderedDict
 import torch.multiprocessing
 import yaml
 
-from ..eval.metric import eval_func
-from ..eval.baseline import MBR_model, ClassBlock, Bottleneck_Transformer, MHSA, weights_init_kaiming, weights_init_classifier
-from ..eval.triplet_sampler import train_collate_fn, CustomDataSet4VERIWILD, CustomDataSet4VERIWILDv2, RandomIdentitySampler, CustomDataSet4Market1501, CustomDataSet4Veri776, CustomDataSet4Veri776_withviewpont, CustomDataSet4VehicleID_Random, CustomDataSet4VehicleID
-from ..eval.eval import re_ranking, get_model, normalize_batch, test_epoch
+from metric import eval_func
+from baseline import MBR_model, ClassBlock, Bottleneck_Transformer, MHSA, weights_init_kaiming, weights_init_classifier
+from triplet_sampler import train_collate_fn, CustomDataSet4VERIWILD, CustomDataSet4VERIWILDv2, RandomIdentitySampler, CustomDataSet4Market1501, CustomDataSet4Veri776, CustomDataSet4Veri776_withviewpont, CustomDataSet4VehicleID_Random, CustomDataSet4VehicleID
+from eval import re_ranking, get_model, normalize_batch, test_epoch
 
 
 class IBN(nn.Module):
@@ -433,7 +433,7 @@ def train_knowledge_distillation(teacher, student, train_loader, epochs, device,
         print(f'Epoch {epoch+1}/{epochs}, Loss: {epoch_loss:.4f}')
 
 if __name__ == "__main__":
-    args_path_weights = "cfg/"
+    args_path_weights = "../baseline/cfg/"
     args_re_rank = False
 
     with open(args_path_weights + "config.yaml", "r") as stream:
