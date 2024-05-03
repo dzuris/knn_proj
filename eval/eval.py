@@ -168,7 +168,7 @@ def test_epoch(model, device, dataloader_q, dataloader_g, model_arch, remove_jun
                 with torch.autocast(device_type="cuda", dtype=torch.float16):
                     _, _, ffs, activations = model(image, cam_id, view_id)
             else:
-                _, _, ffs, activations = model(image, cam_id, view_id)
+                _, _, ffs, activations = model(image, cam_id, view_id) #activations is list containing tensor with shape (48,2048,16,16)
 
             end_vec = []
             for item in ffs:

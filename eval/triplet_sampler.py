@@ -25,7 +25,7 @@ def train_collate_fn(batch):
     viewids = torch.tensor(viewids, dtype=torch.int64)
     camids = torch.tensor(camids, dtype=torch.int64)
 
-    return torch.stack(imgs, dim=0), pids, camids, viewids 
+    return torch.stack(imgs, dim=0), pids, camids, viewids
 
         
 class CustomDataSet4VERIWILD(Dataset):
@@ -235,7 +235,7 @@ class CustomDataSet4Market1501(Dataset):
         if self.transform:
             img = self.transform((image.type(torch.FloatTensor))/255.0)
 
-        return img, vid, camid     
+        return img, vid, camid
 
 
 class CustomDataSet4Veri776(Dataset):
@@ -377,7 +377,7 @@ class CustomDataSet4Veri776_withviewpont(Dataset):
         if self.transform:
             img = self.transform((image.type(torch.FloatTensor))/255.0)
 
-        return img, vid, camid, viewid     
+        return img, vid, camid, viewid
 
 
 class CustomDataSet4VehicleID_Random(Dataset):
