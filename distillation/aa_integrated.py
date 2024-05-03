@@ -1,5 +1,7 @@
 DEVICE_NOTCPU = "mps" #"cpu"
 
+import sys
+sys.path.insert(0, 'eval')
 import math
 import warnings
 import torch
@@ -27,8 +29,6 @@ import yaml
 from torchvision.models import mobilenet_v3_small, MobileNet_V3_Small_Weights
 import time
 
-import sys
-sys.path.insert(0, 'eval')
 from metric import eval_func
 from baseline import MBR_model, ClassBlock, Bottleneck_Transformer, MHSA, weights_init_kaiming, weights_init_classifier
 from triplet_sampler import train_collate_fn, CustomDataSet4VERIWILD, CustomDataSet4VERIWILDv2, RandomIdentitySampler, CustomDataSet4Market1501, CustomDataSet4Veri776, CustomDataSet4Veri776_withviewpont, CustomDataSet4VehicleID_Random, CustomDataSet4VehicleID
@@ -496,7 +496,6 @@ if __name__ == "__main__":
     teacher = model
 
     teacher_params_count = sum(p.numel() for p in teacher.parameters())
-    print("teacher params", teacher_params_count)
 
     student = LightNN(class_num=data['n_classes'], n_branches=[], losses="LBS", n_groups=4, LAI=data['LAI'], n_cams=data['n_cams'], n_views=data['n_views'])
 
@@ -524,12 +523,13 @@ if __name__ == "__main__":
     teacher.to(device)
     student.to(device)
 
-    
     # Get the current time in Unix format
     unix_time = int(time.time())
 
     # How many epochs should run
     epochs_count = 1
+
+    # Training student
     train_knowledge_distillation(teacher, student, data_train, epochs_count, device, data['gamma_ce'], data['alpha_ce'], unix_time=unix_time)
 
     # Save the weights with unix time to avoid overriding files
