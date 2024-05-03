@@ -492,6 +492,8 @@ if __name__ == "__main__":
 
     student_params_count = sum(p.numel() for p in student.parameters())
 
+    print("Teacher parameters count:", teacher_params_count)
+    print("Student parameters count:", student_params_count)
     print("Student network has", teacher_params_count / student_params_count, "times less parameters")
 
     if data["LAI"]:
