@@ -6,4 +6,4 @@ You have to be in root directory and then:
 python distillation/aa_integrated.py
 ```
 
-The config path is pointing to `baseline/cfg/config.yaml` file. But you can modify it `args_path_weights` variable. 
+The config path is pointing to `baseline/cfg/config.yaml` file. But you can modify it in `args_path_weights` variable. 
