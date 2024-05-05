@@ -72,19 +72,19 @@ weight_decay: 0.0005
 x_length: 256
 y_length: 256
 
-# gallery_list_file: C:\Users\holan\Downloads\VeRi\VeRi\name_test.txt
-# query_dir: C:\Users\holan\Downloads\VeRi\VeRi\image_query
-# query_list_file: C:\Users\holan\Downloads\VeRi\VeRi\name_query.txt
-# test_keypoint: C:\Users\holan\Code\nn\knn_proj\datasets\VeRi776\keypoint_orient_test.txt
-# teste_dir: C:\Users\holan\Downloads\VeRi\VeRi\image_test
-# train_dir: C:\Users\holan\Downloads\VeRi\VeRi\image_train
-# train_keypoint: C:\Users\holan\Code\nn\knn_proj\datasets\VeRi776\keypoint_orient_train.txt
-# train_list_file: C:\Users\holan\Downloads\VeRi\VeRi\name_train.txt
-gallery_list_file: C:\Users\adamd\Downloads\VeRi\VeRi\name_test.txt
-query_dir: C:\Users\adamd\Downloads\VeRi\VeRi\image_query
-query_list_file: C:\Users\adamd\Downloads\VeRi\VeRi\name_query.txt
-test_keypoint: C:\Users\adamd\Github\knn_proj\datasets\VeRi776\keypoint_orient_test.txt
-teste_dir: C:\Users\adamd\Downloads\VeRi\VeRi\image_test
-train_dir: C:\Users\adamd\Downloads\VeRi\VeRi\image_train
-train_keypoint: C:\Users\adamd\Github\knn_proj\datasets\VeRi776\keypoint_orient_train.txt
-train_list_file: C:\Users\adamd\Downloads\VeRi\VeRi\name_train.txt
+gallery_list_file: C:\Users\holan\Downloads\VeRi\VeRi\name_test.txt
+query_dir: C:\Users\holan\Downloads\VeRi\VeRi\image_query
+query_list_file: C:\Users\holan\Downloads\VeRi\VeRi\name_query.txt
+test_keypoint: C:\Users\holan\Code\nn\knn_proj\datasets\VeRi776\keypoint_orient_test.txt
+teste_dir: C:\Users\holan\Downloads\VeRi\VeRi\image_test
+train_dir: C:\Users\holan\Downloads\VeRi\VeRi\image_train
+train_keypoint: C:\Users\holan\Code\nn\knn_proj\datasets\VeRi776\keypoint_orient_train.txt
+train_list_file: C:\Users\holan\Downloads\VeRi\VeRi\name_train.txt
+# gallery_list_file: C:\Users\adamd\Downloads\VeRi\VeRi\name_test.txt
+# query_dir: C:\Users\adamd\Downloads\VeRi\VeRi\image_query
+# query_list_file: C:\Users\adamd\Downloads\VeRi\VeRi\name_query.txt
+# test_keypoint: C:\Users\adamd\Github\knn_proj\datasets\VeRi776\keypoint_orient_test.txt
+# teste_dir: C:\Users\adamd\Downloads\VeRi\VeRi\image_test
+# train_dir: C:\Users\adamd\Downloads\VeRi\VeRi\image_train
+# train_keypoint: C:\Users\adamd\Github\knn_proj\datasets\VeRi776\keypoint_orient_train.txt
+# train_list_file: C:\Users\adamd\Downloads\VeRi\VeRi\name_train.txt

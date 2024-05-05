@@ -63,43 +63,6 @@ def getTeacherModel(weight_path, data):
     
     return model.to(device)
 
-def getDatasetInParts(path, data, dataset='VERIWILD'):
-    """
-    Args:
-        path : path to the root folder of the dataset (not to exact files!)
-        dataset : [VERIWILD|VehicleID|Veri776]
-    Return:
-        data_train, data_g, data_q
-    """
-    
-    ## Dataset Loading       
-    if dataset == "VehicleID":
-        data_q = trs.CustomDataSet4VehicleID(path+'/train_test_split/test_list_800.txt', path+'/image/', is_train=False, mode="q", transform=test_transform)
-        data_g = trs.CustomDataSet4VehicleID(path+'/train_test_split/test_list_800.txt', path+'/image/', is_train=False, mode="g", transform=test_transform)
-        data_train = trs.CustomDataSet4VehicleID(path+"/train_test_split/train_list.txt", path+'/image/', is_train=True, transform=train_transform)
-        data_train = trs.DataLoader(data_train, sampler=trs.RandomIdentitySampler(data_train, data['BATCH_SIZE'], data['NUM_INSTANCES']), num_workers=data['num_workers_train'], batch_size = data['BATCH_SIZE'], collate_fn=trs.train_collate_fn, pin_memory=True)#
-        data_q = trs.DataLoader(data_q, batch_size=data['BATCH_SIZE'], shuffle=False, num_workers=data['num_workers_teste'])
-        data_g = trs.DataLoader(data_g, batch_size=data['BATCH_SIZE'], shuffle=False, num_workers=data['num_workers_teste'])
-    if dataset == 'VERIWILD':
-        data_q = trs.CustomDataSet4VERIWILD(path+'/train_test_split/test_3000_id_query.txt', path+'/images/', transform=test_transform, with_view=False)
-        data_g = trs.CustomDataSet4VERIWILD(path+'/train_test_split/test_3000_id.txt', path+'/images/', transform=test_transform, with_view=False)
-        data_train = trs.CustomDataSet4VERIWILD(path+'/train_test_split/train_list_start0.txt', path+'/images/', transform=train_transform, with_view=False)
-        data_train = td.DataLoader(data_train, sampler=trs.RandomIdentitySampler(data_train, data['BATCH_SIZE'], data['NUM_INSTANCES']), num_workers=data['num_workers_train'], batch_size = data['BATCH_SIZE'], collate_fn=trs.train_collate_fn, pin_memory=True)
-        data_q = td.DataLoader(data_q, batch_size=data['BATCH_SIZE'], shuffle=False, num_workers=data['num_workers_teste'])
-        data_g = td.DataLoader(data_g, batch_size=data['BATCH_SIZE'], shuffle=False, num_workers=data['num_workers_teste'])
-
-    if dataset == 'Veri776':
-        data_q = trs.CustomDataSet4Veri776_withviewpont(data['query_list_file'], data['query_dir'], data['train_keypoint'], data['test_keypoint'], is_train=False, transform=test_transform)
-        data_g = trs.CustomDataSet4Veri776_withviewpont(data['gallery_list_file'], data['teste_dir'], data['train_keypoint'], data['test_keypoint'], is_train=False, transform=test_transform)
-        if data["LAI"]:
-            data_train = trs.CustomDataSet4Veri776_withviewpont(data['train_list_file'], data['train_dir'], data['train_keypoint'], data['test_keypoint'], is_train=True, transform=train_transform)
-        else:
-            data_train = trs.CustomDataSet4Veri776(data['train_list_file'], data['train_dir'], is_train=True, transform=train_transform)
-        data_train = td.DataLoader(data_train, sampler=trs.RandomIdentitySampler(data_train, data['BATCH_SIZE'], data['NUM_INSTANCES']), num_workers=data['num_workers_train'], batch_size = data['BATCH_SIZE'], collate_fn=trs.train_collate_fn, pin_memory=True)
-        data_g = td.DataLoader(data_g, batch_size=data['BATCH_SIZE'], shuffle=False, num_workers=data['num_workers_teste'])
-        data_q = td.DataLoader(data_q, batch_size=data['BATCH_SIZE'], shuffle=False, num_workers=data['num_workers_teste'])
-
-    return data_train, data_g, data_q
 
 
 def do_training(m_student, m_teacher, dataloader, num_epochs):

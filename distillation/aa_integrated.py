@@ -3,37 +3,26 @@ DEVICE_NOTCPU = "mps" #"cpu"
 import sys
 sys.path.insert(0, 'eval')
 import math
-import warnings
 import torch
 import torch.nn as nn
-import torchvision
 from torchvision import models
 import torch.nn.functional as F
-from torch import Tensor
-import numpy as np
 import copy
 from tqdm import tqdm
-from multiprocessing import Pool
 import time
-import random
-from collections import defaultdict
-import pandas as pd
-from torch.utils.data import Dataset
-from torch.utils.data.sampler import Sampler
-import os
 from torchvision import transforms
 from torch.utils.data import DataLoader
 from typing import OrderedDict
 import torch.multiprocessing
 import yaml
 from torchvision.models import mobilenet_v3_small, MobileNet_V3_Small_Weights
-import time
 
 from metric import eval_func
 from baseline import MBR_model, ClassBlock, Bottleneck_Transformer, MHSA, weights_init_kaiming, weights_init_classifier
 from triplet_sampler import train_collate_fn, CustomDataSet4VERIWILD, CustomDataSet4VERIWILDv2, RandomIdentitySampler, CustomDataSet4Market1501, CustomDataSet4Veri776, CustomDataSet4Veri776_withviewpont, CustomDataSet4VehicleID_Random, CustomDataSet4VehicleID
 from eval import re_ranking, get_model, normalize_batch, test_epoch
-
+import torch.optim as optim
+from datetime import datetime
 
 class IBN(nn.Module):
     r"""Instance-Batch Normalization layer from
@@ -382,8 +371,45 @@ class LightNN(nn.Module):
         ffs = self.multiSimulator(backboneOut)
         pred = self.classifier(ffs)
         return pred, None, [ffs], [torch.empty(ffs.shape[0])]
+
+def getDatasetInParts(path, data, test_transform, train_transform, dataset='VERIWILD'):
+    """
+    Args:
+        path : path to the root folder of the dataset (not to exact files!)
+        dataset : [VERIWILD|VehicleID|Veri776]
+    Return:
+        data_train, data_g, data_q
+    """
     
-import torch.optim as optim
+    ## Dataset Loading       
+    if dataset == "VehicleID":
+        data_q = CustomDataSet4VehicleID(path+'/train_test_split/test_list_800.txt', path+'/image/', is_train=False, mode="q", transform=test_transform)
+        data_g = CustomDataSet4VehicleID(path+'/train_test_split/test_list_800.txt', path+'/image/', is_train=False, mode="g", transform=test_transform)
+        data_train = CustomDataSet4VehicleID(path+"/train_test_split/train_list.txt", path+'/image/', is_train=True, transform=train_transform)
+        data_train = DataLoader(data_train, sampler=RandomIdentitySampler(data_train, data['BATCH_SIZE'], data['NUM_INSTANCES']), num_workers=data['num_workers_train'], batch_size = data['BATCH_SIZE'], collate_fn=train_collate_fn, pin_memory=True)#
+        data_q = DataLoader(data_q, batch_size=data['BATCH_SIZE'], shuffle=False, num_workers=data['num_workers_teste'])
+        data_g = DataLoader(data_g, batch_size=data['BATCH_SIZE'], shuffle=False, num_workers=data['num_workers_teste'])
+    if dataset == 'VERIWILD':
+        data_q = CustomDataSet4VERIWILD(path+'/train_test_split/test_3000_id_query.txt', path+'/images/', transform=test_transform, with_view=False)
+        data_g = CustomDataSet4VERIWILD(path+'/train_test_split/test_3000_id.txt', path+'/images/', transform=test_transform, with_view=False)
+        data_train = CustomDataSet4VERIWILD(path+'/train_test_split/train_list_start0.txt', path+'/images/', transform=train_transform, with_view=False)
+        data_train = DataLoader(data_train, sampler=RandomIdentitySampler(data_train, data['BATCH_SIZE'], data['NUM_INSTANCES']), num_workers=data['num_workers_train'], batch_size = data['BATCH_SIZE'], collate_fn=train_collate_fn, pin_memory=True)
+        data_q = DataLoader(data_q, batch_size=data['BATCH_SIZE'], shuffle=False, num_workers=data['num_workers_teste'])
+        data_g = DataLoader(data_g, batch_size=data['BATCH_SIZE'], shuffle=False, num_workers=data['num_workers_teste'])
+
+    if dataset == 'Veri776':
+        data_q = CustomDataSet4Veri776_withviewpont(data['query_list_file'], data['query_dir'], data['train_keypoint'], data['test_keypoint'], is_train=False, transform=test_transform)
+        data_g = CustomDataSet4Veri776_withviewpont(data['gallery_list_file'], data['teste_dir'], data['train_keypoint'], data['test_keypoint'], is_train=False, transform=test_transform)
+        if data["LAI"]:
+            data_train = CustomDataSet4Veri776_withviewpont(data['train_list_file'], data['train_dir'], data['train_keypoint'], data['test_keypoint'], is_train=True, transform=train_transform)
+        else:
+            data_train = CustomDataSet4Veri776(data['train_list_file'], data['train_dir'], is_train=True, transform=train_transform)
+        data_train = DataLoader(data_train, sampler=RandomIdentitySampler(data_train, data['BATCH_SIZE'], data['NUM_INSTANCES']), num_workers=data['num_workers_train'], batch_size = data['BATCH_SIZE'], collate_fn=train_collate_fn, pin_memory=True)
+        data_g = DataLoader(data_g, batch_size=data['BATCH_SIZE'], shuffle=False, num_workers=data['num_workers_teste'])
+        data_q = DataLoader(data_q, batch_size=data['BATCH_SIZE'], shuffle=False, num_workers=data['num_workers_teste'])
+
+    return data_train, data_g, data_q
+
 
 def train_knowledge_distillation(teacher, student, train_loader, epochs, device, teacherGamma, teacherAlpha, unix_time=0):#, learning_rate, T, soft_target_loss_weight, ce_loss_weight):
     TEMPERATURE = 1.
@@ -439,7 +465,7 @@ def train_knowledge_distillation(teacher, student, train_loader, epochs, device,
 
         if epoch in list_of_epochs and epoch != epochs:
             # Save the weights with unix time to avoid overriding files
-            torch.save(student.state_dict(), "light_" + str(epoch) + "_" + str(unix_time) + ".pth")
+            torch.save(student.state_dict(), "light_" + str(epoch) + "_" + str(datetime.fromtimestamp(unix_time).strftime('%Y_%m_%d_%H_%M_%S')) + ".pth")
 
 
 if __name__ == "__main__":
@@ -449,23 +475,28 @@ if __name__ == "__main__":
     with open(args_path_weights + "config.yaml", "r") as stream:
             data = yaml.safe_load(stream)
 
+    if data['half_precision']:
+        scaler = torch.cuda.amp.GradScaler()
+    else:
+        scaler=False
+
+    train_transform = transforms.Compose([
+                    transforms.Resize((data['y_length'],data['x_length']), antialias=True),
+                    transforms.Pad(10),
+                    transforms.RandomCrop((data['y_length'], data['x_length'])),
+                    transforms.RandomHorizontalFlip(p=data['p_hflip']),
+                    transforms.Normalize(data['n_mean'], data['n_std']),
+                    transforms.RandomErasing(p=data['p_rerase'], value=0),
+    ]) 
     teste_transform = transforms.Compose([
                     transforms.Resize((data['y_length'],data['x_length']), antialias=True),
                     transforms.Normalize(data['n_mean'], data['n_std']),
 
     ])                  
 
-    if data['half_precision']:
-        scaler = torch.cuda.amp.GradScaler()
-    else:
-        scaler=False
 
-    if data['dataset'] == 'Veri776':
-        data_q = CustomDataSet4Veri776_withviewpont(data['query_list_file'], data['query_dir'], data['train_keypoint'], data['test_keypoint'], is_train=False, transform=teste_transform)
-        data_g = CustomDataSet4Veri776_withviewpont(data['gallery_list_file'], data['teste_dir'], data['train_keypoint'], data['test_keypoint'], is_train=False, transform=teste_transform)
-        data_q = DataLoader(data_q, batch_size=data['BATCH_SIZE'], shuffle=False, num_workers=data['num_workers_teste'])
-        data_g = DataLoader(data_g, batch_size=data['BATCH_SIZE'], shuffle=False, num_workers=data['num_workers_teste'])
-
+    data_train, data_q, data_g = getDatasetInParts("", data, test_transform=teste_transform, train_transform=train_transform, dataset='Veri776')
+    
     # Check if the GPU is available
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device(DEVICE_NOTCPU)
     print(f'Selected device: {device}')
@@ -481,17 +512,6 @@ if __name__ == "__main__":
         tmp = torch.load(path_weights, map_location='cpu')
         tmp = OrderedDict((k.replace("module.", ""), v) for k, v in tmp.items())
         model.load_state_dict(tmp)
-    # model = LightNN(class_num=data['n_classes'], n_branches=[], losses="LBS", n_groups=4, LAI=data['LAI'], n_cams=data['n_cams'], n_views=data['n_views'])
-    # model.load_state_dict(torch.load('light.pth'))
-
-    # model = model.to(device)
-    # model.eval()
-
-    # mean = False
-    # l2 = True
-
-    # cmc, mAP = test_epoch(model, device, data_q, data_g, data['model_arch'], remove_junk=True, scaler=scaler, re_rank=args_re_rank)
-    # exit()
 
     teacher = model
 
@@ -503,34 +523,23 @@ if __name__ == "__main__":
 
     print("Teacher parameters count:", teacher_params_count)
     print("Student parameters count:", student_params_count)
-    print("Student network has", teacher_params_count / student_params_count, "times less parameters")
+    print("Student network has {:.2%} of teacher parameters".format(student_params_count / teacher_params_count))
 
     if data["LAI"]:
         raise NotImplementedError("Original model is better of LAI, see article")
-
-    train_transform = transforms.Compose([
-                        transforms.Resize((data['y_length'],data['x_length']), antialias=True),
-                        transforms.Pad(10),
-                        transforms.RandomCrop((data['y_length'], data['x_length'])),
-                        transforms.RandomHorizontalFlip(p=data['p_hflip']),
-                        transforms.Normalize(data['n_mean'], data['n_std']),
-                        transforms.RandomErasing(p=data['p_rerase'], value=0),
-        ]) 
-
-    data_train = CustomDataSet4Veri776(data['train_list_file'], data['train_dir'], is_train=True, transform=train_transform)
-    data_train = DataLoader(data_train, sampler=RandomIdentitySampler(data_train, data['BATCH_SIZE'], data['NUM_INSTANCES']), num_workers=data['num_workers_train'], batch_size = data['BATCH_SIZE'], collate_fn=train_collate_fn, pin_memory=True)        
 
     teacher.to(device)
     student.to(device)
 
     # Get the current time in Unix format
     unix_time = int(time.time())
-
+    
     # How many epochs should run
-    epochs_count = 1
+    epochs_count = 100
 
     # Training student
     train_knowledge_distillation(teacher, student, data_train, epochs_count, device, data['gamma_ce'], data['alpha_ce'], unix_time=unix_time)
 
     # Save the weights with unix time to avoid overriding files
-    torch.save(student.state_dict(), "light_" + str(unix_time) + ".pth")
+    unix_time = int(time.time()) # save the last model
+    torch.save(student.state_dict(), "light_" + str(datetime.fromtimestamp(unix_time).strftime('%Y_%m_%d_%H_%M_%S')) + ".pth")
