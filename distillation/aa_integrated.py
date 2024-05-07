@@ -467,6 +467,7 @@ def train_knowledge_distillation(teacher, student, train_loader, epochs, device,
             # Save the weights with unix time to avoid overriding files
             torch.save(student.state_dict(), "light_" + str(epoch) + "_" + str(datetime.fromtimestamp(unix_time).strftime('%Y_%m_%d_%H_%M_%S')) + ".pth")
 
+TEST_MODE = True
 
 if __name__ == "__main__":
     args_path_weights = "baseline/cfg/"
@@ -500,6 +501,44 @@ if __name__ == "__main__":
     # Check if the GPU is available
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device(DEVICE_NOTCPU)
     print(f'Selected device: {device}')
+
+    if TEST_MODE:
+        # Given models:
+        import os
+        modelsDir = "/Users/jakubkasem/Downloads/results" #"<path>"
+        modelNames = []
+        for (_, _, filenames) in os.walk(modelsDir):
+            modelNames.extend(filenames)
+            break
+
+        # Evaluation will be stored as dataframe:
+        import pandas as pd
+        evaluation = pd.DataFrame(pd.DataFrame({'model': modelNames}))
+        evaluation['mAP'] = 0.
+        evaluation['cmc1'] = 0.
+        evaluation['cmc5'] = 0.
+
+        # Evaluate every model in given directory, store metrics in the dataframe:
+        for index, row in evaluation.iterrows():
+            # Load model:
+            modelPath = os.path.join(modelsDir, row['model'])
+            model = LightNN(class_num=data['n_classes'], n_branches=[], losses="LBS", n_groups=4, LAI=data['LAI'], n_cams=data['n_cams'], n_views=data['n_views'])
+            model.load_state_dict(torch.load(modelPath))
+            model = model.to(device)
+            model.eval()
+
+            # Get model's metrics:
+            mean = False
+            l2 = True
+            cmc, mAP = test_epoch(model, device, data_q, data_g, data['model_arch'], remove_junk=True, scaler=scaler, re_rank=args_re_rank)
+
+            # Store metrics:
+            evaluation.at[index,'mAP'] = mAP
+            evaluation.at[index,'cmc1'] = cmc[0]
+            evaluation.at[index,'cmc5'] = cmc[4]
+        
+        evaluation.to_csv(f'{modelsDir}/evaluation.csv', index=False, sep=';')
+        exit()
 
     model = get_model(data, device)
     # One of the saved weights last.pt best_CMC.pt best_mAP.pt
