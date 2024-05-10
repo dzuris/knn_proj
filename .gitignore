@@ -6,3 +6,4 @@ baseline/cfg/result_cmc_l2_True_mean_False.npy
 baseline/cfg/result_map_l2_True_mean_False.npy
 lightweight/__pycache__/*
 distillation/*.pth
+submition/*
