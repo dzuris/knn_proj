@@ -472,10 +472,16 @@ TEST_MODE = True
 if __name__ == "__main__":
     args_path_weights = "baseline/cfg/"
     args_re_rank = False
-
+    
+     # Check if the GPU is available
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device(DEVICE_NOTCPU)
+    print(f'Selected device: {device}')
+    
     with open(args_path_weights + "config.yaml", "r") as stream:
             data = yaml.safe_load(stream)
 
+    model = get_model(data, device)
+    
     if data['half_precision']:
         scaler = torch.cuda.amp.GradScaler()
     else:
@@ -498,9 +504,7 @@ if __name__ == "__main__":
 
     data_train, data_q, data_g = getDatasetInParts("", data, test_transform=teste_transform, train_transform=train_transform, dataset='Veri776')
     
-    # Check if the GPU is available
-    device = torch.device("cuda") if torch.cuda.is_available() else torch.device(DEVICE_NOTCPU)
-    print(f'Selected device: {device}')
+   
 
     if TEST_MODE:
         # Given models:
